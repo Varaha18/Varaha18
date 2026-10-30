@@ -120,8 +120,12 @@ def arbeitsagentur(what: str, where: str, radius_km: int = 50, days: int = 21,
         if r.status_code != 404:
             break
     r.raise_for_status()
+    data = r.json()
+    if "stellenangebote" not in data:
+        log.debug("arbeitsagentur %s: no results; response keys %s, maxErgebnisse=%s",
+                  r.url, list(data), data.get("maxErgebnisse"))
     jobs = []
-    for s in r.json().get("stellenangebote", []):
+    for s in data.get("stellenangebote", []):
         refnr = s.get("refnr") or s.get("referenznummer")
         if not refnr:
             continue

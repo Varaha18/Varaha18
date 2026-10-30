@@ -97,19 +97,38 @@ def check_sources(search: dict) -> list[tuple[str, str]]:
                 out.append((FAIL, f"{kind}:{slug}: {e}"))
     ba = srcs.get("arbeitsagentur") or {}
     if ba.get("enabled"):
-        keyword = (search.get("keywords") or ["Ingenieur"])[0]
-        try:
-            jobs = sources.arbeitsagentur(keyword, ba.get("where", ""), ba.get("radius_km", 50),
-                                          search.get("max_age_days", 21), size=3, fetch_details=True)
-            with_text = sum(1 for j in jobs if len(j["description"]) > 300)
-            out.append((OK if jobs else WARN, f"arbeitsagentur: '{keyword}' -> {len(jobs)} sample postings, "
-                                              f"{with_text} with full description"))
-            if jobs and not with_text:
-                out.append((WARN, "arbeitsagentur: job details unavailable; scoring will rely on titles"))
-        except requests.RequestException as e:
-            out.append((FAIL, f"arbeitsagentur: {e}"))
+        out.extend(_check_arbeitsagentur(search, ba))
     if not out:
         out.append((FAIL, "sources: none configured - add boards or enable arbeitsagentur in config.yaml"))
+    return out
+
+
+def _check_arbeitsagentur(search: dict, ba: dict) -> list[tuple[str, str]]:
+    where, radius, days = ba.get("where", ""), ba.get("radius_km", 50), search.get("max_age_days", 21)
+    out, found = [], None
+    try:
+        for keyword in search.get("keywords") or []:
+            jobs = sources.arbeitsagentur(keyword, where, radius, days, size=5, fetch_details=False)
+            out.append((OK if jobs else WARN, f"arbeitsagentur: '{keyword}' -> {len(jobs)} postings"))
+            found = found or (jobs[0] if jobs else None)
+        if found is None:
+            # Tell "API works, keywords too narrow" apart from "API returns nothing".
+            probe = sources.arbeitsagentur("Ingenieur", where, radius, days, size=5, fetch_details=False)
+            if probe:
+                out.append((WARN, f"arbeitsagentur: API works ('Ingenieur' -> {len(probe)} postings) but none of "
+                                  "your keywords match - add German terms such as Robotik, Mechatronik, "
+                                  "Automatisierungstechnik, Konstrukteur"))
+            else:
+                out.append((FAIL, "arbeitsagentur: even 'Ingenieur' returns nothing - the API may have changed; "
+                                  "run with -v and share the output"))
+            return out
+        details = sources._ba_details(found["id"].split(":", 2)[2])
+        text = details.get("stellenangebotsBeschreibung") or details.get("stellenbeschreibung") or ""
+        out.append((OK if len(text) > 300 else WARN,
+                    "arbeitsagentur: job details " + ("available" if len(text) > 300 else
+                                                      "unavailable; scoring will rely on titles")))
+    except requests.RequestException as e:
+        out.append((FAIL, f"arbeitsagentur: {e}"))
     return out
 
 
