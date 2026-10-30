@@ -60,13 +60,23 @@ The bot never tries to bypass CAPTCHAs. LinkedIn and Indeed are not used because
 
 ### Run it every day
 
+Cron and Task Scheduler don't load your shell profile, so put your keys in a `.env` file (git-ignored):
+
+```bash
+cp .env.example .env
+chmod 600 .env          # then edit .env and fill in the three values
+./run-daily.sh          # test it once; output goes to data/cron.log
+```
+
 macOS/Linux (`crontab -e`), every weekday at 08:10:
 
 ```
-10 8 * * 1-5 cd /path/to/job-bot && .venv/bin/python -m jobbot run --mode auto >> data/cron.log 2>&1
+10 8 * * 1-5 /full/path/to/job-bot/run-daily.sh
 ```
 
-Windows: in Task Scheduler, create a daily task that runs `.venv\Scripts\python.exe -m jobbot run --mode auto` with "Start in" set to the `job-bot` folder.
+On macOS, keep the project outside Desktop, Documents and Downloads (e.g. `~/Projects`), because cron is not allowed to read those folders by default. The computer must be awake at that time.
+
+Windows: create `run-daily.bat` containing `set` lines for the three variables, then `cd /d C:\path\to\job-bot` and `.venv\Scripts\python.exe -m jobbot run --mode auto >> data\cron.log 2>&1`. Schedule it daily in Task Scheduler.
 
 ## How resumes are written
 
