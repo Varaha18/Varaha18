@@ -65,3 +65,9 @@ def test_submit_detects_confirmation(page, profile, tmp_path):
     ap.fill_form(page, profile, {"resume": str(resume)}, {"accept_privacy_consent": True}, free_text=lambda q: "x")
     page.fill("#fav", "blue")
     assert ap.submit(page, timeout_ms=5000)
+
+
+def test_placeholders_and_lever_markers(profile):
+    profile["application_answers"]["years_experience"] = "TODO"
+    assert ap.answer_for("Years of experience *", profile) is None
+    assert ap.answer_for("Full name✱", profile) == profile["personal"]["name"]

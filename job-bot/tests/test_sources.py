@@ -44,3 +44,27 @@ def test_ashby_skips_unlisted(monkeypatch):
     monkeypatch.setattr(sources.requests, "get", lambda *a, **k: Resp(data))
     jobs = sources.ashby("acme")
     assert [j["title"] for j in jobs] == ["CV Engineer"] and jobs[0]["location"] == "Berlin (Remote)"
+
+
+def test_arbeitsagentur_uses_beruf_and_details(monkeypatch):
+    calls = []
+
+    class R(Resp):
+        status_code = 200
+
+    def get(url, **kw):
+        calls.append(url)
+        if url.endswith("/jobs"):
+            return R({"stellenangebote": [{"refnr": "10000-1184867112-S", "beruf": "Ingenieur/in - Robotik",
+                                           "arbeitgeber": "Acme GmbH", "arbeitsort": {"ort": "Berlin"},
+                                           "aktuelleVeroeffentlichungsdatum": "2026-10-20"}]})
+        return R({"stellenangebotsTitel": "Robotics Engineer (m/w/d)", "stellenangebotsBeschreibung": "ROS 2 und Python"})
+
+    monkeypatch.setattr(sources.requests, "get", get)
+    [job] = sources.arbeitsagentur("Robotik", "Berlin")
+    assert calls[0].endswith("/pc/v6/jobs")
+    assert job["title"] == "Robotics Engineer (m/w/d)" and job["description"] == "ROS 2 und Python"
+
+    monkeypatch.setattr(sources, "_ba_details", lambda refnr: {})
+    [job] = sources.arbeitsagentur("Robotik", "Berlin")
+    assert job["title"] == "Ingenieur/in - Robotik"  # falls back to the occupation, never empty

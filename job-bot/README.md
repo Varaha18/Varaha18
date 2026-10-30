@@ -38,6 +38,12 @@ Then edit:
 
 ## Usage
 
+Check your setup first. This tests your profile, Claude key, browser, every job board in `config.yaml` and your mail login, without applying or sending anything:
+
+```bash
+python -m jobbot check
+```
+
 ```bash
 python -m jobbot run                 # full pipeline (apply in review mode)
 python -m jobbot run --mode auto     # unattended applying (see below)

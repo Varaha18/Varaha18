@@ -45,13 +45,14 @@ def _current(profile: dict, key: str) -> str:
 
 def answer_for(label: str, profile: dict) -> str | bool | None:
     """Map a form question to an answer from the profile, or None if unknown."""
-    text = re.sub(r"\s+", " ", (label or "").lower()).strip(" *:")
+    # Strip required markers such as "*" or Lever's "✱" and trailing colons.
+    text = re.sub(r"(\s|\*|✱|:|•|\(required\))+$", "", re.sub(r"\s+", " ", (label or "").lower()).strip())
     p = profile.get("personal", {})
     a = profile.get("application_answers", {}) or {}
 
     for rule in a.get("custom", []) or []:
         if re.search(rule["match"], text, flags=re.I):
-            return rule["answer"]
+            return None if _placeholder(rule["answer"]) else rule["answer"]
 
     first, last = _first_last(p)
     rules = [
@@ -80,9 +81,14 @@ def answer_for(label: str, profile: dict) -> str | bool | None:
         (r"location|city|where are you based|wohnort|address", p.get("location")),
     ]
     for pattern, value in rules:
-        if re.search(pattern, text) and value not in (None, ""):
+        if re.search(pattern, text) and value not in (None, "") and not _placeholder(value):
             return value
     return None
+
+
+def _placeholder(value) -> bool:
+    """Unfilled profile values ("TODO ...") must never be typed into a form."""
+    return isinstance(value, str) and "todo" in value.lower()
 
 
 def choose_option(answer, options: list[str]) -> str | None:

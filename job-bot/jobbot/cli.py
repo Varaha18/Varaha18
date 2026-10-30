@@ -71,7 +71,9 @@ def cmd_score(s: Settings, db: DB) -> None:
     for job in db.jobs("found"):
         kw_score, matched = filters.keyword_score(dict(job), s.profile)
         score, reason = kw_score, f"keyword match: {', '.join(matched) or 'none'}"
-        if llm and kw_score >= cfg.get("llm_prefilter_min", 15):
+        # Postings without a description can't be keyword-matched; let Claude judge the title.
+        thin = len(job["description"] or "") < 300
+        if llm and (thin or kw_score >= cfg.get("llm_prefilter_min", 15)):
             from .llm import LLMError
             from .resume import llm_score
 
@@ -280,6 +282,7 @@ def main(argv=None) -> None:
     parser.add_argument("--home", type=Path, help="folder with config.yaml/profile.yaml (default: cwd)")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("init", help="create config.yaml and profile.yaml from the examples")
+    sub.add_parser("check", help="test profile, API key, browser, job boards and mail login")
     sub.add_parser("search", help="fetch new postings and apply filters")
     sub.add_parser("score", help="score new postings for fit and shortlist")
     t = sub.add_parser("tailor", help="generate tailored resumes for shortlisted jobs")
@@ -310,6 +313,10 @@ def main(argv=None) -> None:
         return
 
     s = load_settings(args.home)
+    if args.cmd == "check":
+        from . import doctor
+
+        sys.exit(doctor.run(s))
     db = DB(s.db_path)
     if args.cmd == "search":
         cmd_search(s, db)
