@@ -24,8 +24,19 @@ def load_yaml(path: Path) -> dict:
         raise FileNotFoundError(
             f"{path} not found. Run `python -m jobbot init` and fill it in."
         )
-    with path.open(encoding="utf-8") as f:
-        return _resolve_env(yaml.safe_load(f) or {})
+    text = path.read_text(encoding="utf-8")
+    try:
+        data = yaml.safe_load(text) or {}
+    except yaml.YAMLError as e:
+        mark = getattr(e, "problem_mark", None)
+        msg = f"{path.name}: {getattr(e, 'problem', None) or e}"
+        if mark is not None:
+            line = text.splitlines()[mark.line] if mark.line < len(text.splitlines()) else ""
+            msg += f" at line {mark.line + 1}:\n    {line}\n    {' ' * mark.column}^"
+        msg += ("\nTip: wrap any value that contains ': ' or ' #', or starts with "
+                "a special character like * & ! % @ `, in double quotes.")
+        raise SystemExit(msg) from None
+    return _resolve_env(data)
 
 
 @dataclass
