@@ -54,6 +54,22 @@ def cmd_search(s: Settings, db: DB) -> None:
     print(f"search: {len(found)} postings, {new} new, {kept} passed filters")
 
 
+def cmd_refilter(s: Settings, db: DB, include_scored: bool) -> None:
+    """Re-check dropped jobs against the current filters (after editing config.yaml)."""
+    cfg = s.section("search")
+    revived = 0
+    for job in db.jobs("filtered_out"):
+        if job["score"] is not None and not include_scored:
+            continue  # dropped for a low fit score, not by a filter
+        keep, reason = filters.check(dict(job), cfg)
+        if keep:
+            db.update(job["id"], status="found", score=None, score_reason=None)
+            revived += 1
+        else:
+            db.update(job["id"], score_reason=reason)
+    print(f"refilter: {revived} jobs passed the current filters and will be scored next")
+
+
 class _Answer(BaseModel):
     answer: str
     answerable_from_profile: bool
@@ -285,6 +301,9 @@ def main(argv=None) -> None:
     sub.add_parser("check", help="test profile, API key, browser, job boards and mail login")
     sub.add_parser("search", help="fetch new postings and apply filters")
     sub.add_parser("score", help="score new postings for fit and shortlist")
+    rf = sub.add_parser("refilter", help="re-check dropped jobs after you change filters in config.yaml")
+    rf.add_argument("--include-scored", action="store_true",
+                    help="also re-check jobs dropped for a low fit score (they get scored again)")
     t = sub.add_parser("tailor", help="generate tailored resumes for shortlisted jobs")
     t.add_argument("--limit", type=int)
     t.add_argument("--job")
@@ -322,6 +341,8 @@ def main(argv=None) -> None:
         cmd_search(s, db)
     elif args.cmd == "score":
         cmd_score(s, db)
+    elif args.cmd == "refilter":
+        cmd_refilter(s, db, args.include_scored)
     elif args.cmd == "tailor":
         cmd_tailor(s, db, args.limit, args.job)
     elif args.cmd == "apply":

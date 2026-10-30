@@ -8,7 +8,7 @@ A personal job-search pipeline that runs on your own computer:
 4. **Fact-check:** compares every title, number, skill and bullet with your profile. A resume with any mismatch goes to `resume_needs_review` instead of being sent.
 5. **Apply:** opens the application form, fills it from your profile, uploads the resume and submits it. By default you confirm each submit yourself.
 6. **Mail:** reads your inbox over IMAP, matches replies to your applications and labels each one as confirmation, rejection, assessment, interview or offer. It files them into `JobBot/<Type>` folders and updates the application's status.
-7. **Excel tracker:** rewrites `data/applications.xlsx` after every command. It has three sheets: Applications, Responses and Summary (response and interview rates).
+7. **Excel tracker:** rewrites `data/applications.xlsx` after every command. It has four sheets: Applications, Filtered out (with the reason each job was dropped), Responses and Summary (response and interview rates).
 
 ## Setup
 
@@ -54,6 +54,7 @@ python -m jobbot tailor --limit 5
 python -m jobbot apply               # review mode: you confirm each submit
 python -m jobbot mail
 python -m jobbot status              # pipeline counts + what needs you
+python -m jobbot refilter           # after changing filters: re-check dropped jobs
 python -m jobbot mark <job-id> interview --note "call with HR on Friday"
 ```
 

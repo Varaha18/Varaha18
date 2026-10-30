@@ -3,18 +3,23 @@
 
 search:
   # Used as search terms for the Arbeitsagentur source.
+  # The Arbeitsagentur is a German board: German terms find far more postings.
+  # Avoid bare "Automation Engineer" - it mostly returns software test automation.
   keywords:
+    - Robotik
     - Robotics Engineer
-    - Automation Engineer
-    - Computer Vision Engineer
-    - Mechatronics Engineer
+    - Automatisierungstechnik
+    - Mechatronik
+    - Computer Vision
+    - Bildverarbeitung
+    - Konstrukteur Maschinenbau
     - Mechanical Design Engineer
-    - Robotik Ingenieur
   # A job title must contain at least one of these (case-insensitive, word start).
   title_include_any:
-    [robot, automation, automatisierung, vision, mechatron, mechanical, konstrukt, machine learning, ml engineer, perception]
+    [robot, automation, automatisierung, vision, bildverarbeitung, mechatron, mechanical, maschinenbau, konstrukt, machine learning, ml engineer, perception]
   title_exclude:
-    [senior, sr., principal, staff, lead, head of, director, manager, werkstudent, praktikum, intern]
+    [senior, sr., principal, staff, lead, head of, director, manager, werkstudent, praktikum, intern,
+     test, testing, qa, devops, java, windows, sap]
   # Location must contain one of these. Remove the list to accept any location.
   locations: [Berlin, Remote, Germany, Deutschland, Potsdam, Brandenburg]
   # Drop postings whose description contains any of these.

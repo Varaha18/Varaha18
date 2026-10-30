@@ -64,6 +64,13 @@ def export(db, path: Path) -> Path:
             ws.cell(row=r, column=status_col).fill = PatternFill("solid", fgColor=color)
     ws.auto_filter.ref = ws.dimensions
 
+    fs = wb.create_sheet("Filtered out")
+    _sheet(fs, [("Company", 22), ("Title", 40), ("Location", 18), ("Fit score", 9),
+                ("Why it was dropped", 70), ("Job URL", 40), ("Job ID", 30)])
+    for j in db.jobs("filtered_out"):
+        fs.append([j["company"], j["title"], j["location"], j["score"], j["score_reason"], j["url"], j["id"]])
+    fs.auto_filter.ref = fs.dimensions
+
     rs = wb.create_sheet("Responses")
     _sheet(rs, [("Received", 12), ("Type", 14), ("Company", 22), ("Job title", 36),
                 ("From", 30), ("Subject", 50), ("Snippet", 70)])

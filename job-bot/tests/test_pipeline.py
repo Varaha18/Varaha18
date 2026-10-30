@@ -66,8 +66,26 @@ def test_search_score_tailor_export(tmp_path, monkeypatch):
     db.advance_status("greenhouse:Acme:1", "confirmation")  # late confirmation must not downgrade
     cli.main(["--home", str(tmp_path), "export"])
     wb = openpyxl.load_workbook(tmp_path / "data" / "applications.xlsx")
-    assert wb.sheetnames == ["Applications", "Responses", "Summary"]
+    assert wb.sheetnames == ["Applications", "Filtered out", "Responses", "Summary"]
+    dropped = list(wb["Filtered out"].iter_rows(values_only=True))
+    assert dropped[1][1] == "Senior Robotics Engineer" and "senior" in dropped[1][4]
     rows = list(wb["Applications"].iter_rows(values_only=True))
     assert rows[0][:4] == ("Company", "Title", "Location", "Status")
     assert ("Acme", "Robotics Engineer", "Berlin", "interview") == rows[1][:4]
     assert len(rows) == 2  # filtered-out posting is not listed
+
+
+def test_refilter_revives_jobs_after_config_change(tmp_path, monkeypatch):
+    root = cli.PACKAGE_ROOT
+    cfg = yaml.safe_load((root / "config.example.yaml").read_text())
+    cfg["search"]["sources"]["arbeitsagentur"]["enabled"] = False
+    (tmp_path / "config.yaml").write_text(yaml.safe_dump(cfg))
+    (tmp_path / "profile.yaml").write_text((root / "profile.example.yaml").read_text())
+    monkeypatch.setattr(sources, "fetch_all", lambda c: JOBS)
+    cli.main(["--home", str(tmp_path), "search"])
+
+    cfg["search"]["title_exclude"] = []
+    (tmp_path / "config.yaml").write_text(yaml.safe_dump(cfg))
+    cli.main(["--home", str(tmp_path), "refilter"])
+    from jobbot.db import DB
+    assert DB(tmp_path / "data" / "jobbot.db").get("greenhouse:Acme:2")["status"] == "found"
