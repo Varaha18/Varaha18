@@ -1,0 +1,46 @@
+from jobbot import sources
+
+
+class Resp:
+    def __init__(self, data):
+        self.data = data
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self.data
+
+
+def test_greenhouse(monkeypatch):
+    data = {"jobs": [{"id": 7, "title": "Robotics Engineer", "location": {"name": "Berlin"},
+                      "absolute_url": "https://boards.greenhouse.io/acme/jobs/7", "updated_at": "2026-10-01T00:00:00Z",
+                      "content": "&lt;p&gt;Build &lt;b&gt;robots&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Python&lt;/li&gt;&lt;/ul&gt;"}]}
+    monkeypatch.setattr(sources.requests, "get", lambda *a, **k: Resp(data))
+    [job] = sources.greenhouse("acme", "Acme")
+    assert job["id"] == "greenhouse:Acme:7" and job["location"] == "Berlin"
+    assert "Build robots" in job["description"] and "- Python" in job["description"]
+
+
+def test_lever_eu(monkeypatch):
+    seen = {}
+
+    def get(url, **kw):
+        seen["url"] = url
+        return Resp([{"id": "x1", "text": "Automation Engineer", "categories": {"location": "Berlin"},
+                      "hostedUrl": "https://jobs.eu.lever.co/acme/x1", "applyUrl": "https://jobs.eu.lever.co/acme/x1/apply",
+                      "createdAt": 1790000000000, "descriptionPlain": "About", "lists": [{"text": "You have", "content": "<li>PLC</li>"}]}])
+
+    monkeypatch.setattr(sources.requests, "get", get)
+    [job] = sources.lever("eu:acme")
+    assert seen["url"].startswith("https://api.eu.lever.co/")
+    assert "PLC" in job["description"] and job["posted_at"].startswith("2026")
+
+
+def test_ashby_skips_unlisted(monkeypatch):
+    data = {"jobs": [{"id": "1", "title": "CV Engineer", "location": "Berlin", "isRemote": True, "jobUrl": "u",
+                      "applyUrl": "a", "descriptionPlain": "d", "publishedAt": "2026-10-01"},
+                     {"id": "2", "title": "Hidden", "isListed": False}]}
+    monkeypatch.setattr(sources.requests, "get", lambda *a, **k: Resp(data))
+    jobs = sources.ashby("acme")
+    assert [j["title"] for j in jobs] == ["CV Engineer"] and jobs[0]["location"] == "Berlin (Remote)"

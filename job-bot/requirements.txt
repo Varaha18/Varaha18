@@ -1,0 +1,7 @@
+anthropic>=2.3.0
+openpyxl>=3.1
+python-docx>=1.1
+PyYAML>=6.0
+requests>=2.31
+pydantic>=2.7
+playwright>=1.47

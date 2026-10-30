@@ -1,0 +1,8 @@
+# personal data and credentials never leave your machine
+config.yaml
+profile.yaml
+.env
+data/
+__pycache__/
+*.pyc
+.pytest_cache/

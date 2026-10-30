@@ -1,0 +1,129 @@
+# Your master profile: the ONLY source of facts for every resume the bot writes.
+# The more real detail you give (especially numbers), the stronger each resume is.
+# Anything marked TODO is a placeholder - replace it or delete it.
+#
+# Pre-filled from your GitHub profile README. Check everything.
+
+personal:
+  name: Varaha Venkat              # TODO: full name as it should appear
+  first_name: Varaha
+  last_name: Venkat
+  email: varaha.venkat@icloud.com
+  phone: "+49 TODO"
+  location: Berlin, Germany
+  linkedin: https://www.linkedin.com/in/varaha-venkat
+  github: https://github.com/Varaha18
+  website: ""
+
+target_titles: [Robotics Engineer, Automation Engineer, Computer Vision Engineer, Mechanical Design Engineer]
+
+languages: ["English (TODO: level)", "German (TODO: level, e.g. B1)"]
+
+preferences:
+  locations: [Berlin, Remote (Germany)]
+  employment: [full-time]
+
+# Work history, newest first. Dates as YYYY-MM; end: present for a current job.
+#   title:           your official title (what a reference check would confirm)
+#   display_title:   optional market-standard name for the SAME job, e.g. official
+#                    "Werkstudent Technik" -> "Working Student, Robotics Engineering".
+#                    The bot uses it as-is; it never invents titles.
+#   company_context: one factual line about the employer (industry, size, reach)
+#   achievements:    scope = individual | team (add team_size and your part)
+experience:
+  - id: exp1
+    company: TODO Company GmbH
+    company_context: "TODO: e.g. Industrial automation supplier, ~300 employees, customers in 20 countries"
+    title: TODO official title
+    display_title: ""
+    employment_type: full-time
+    location: TODO City, Country
+    start: "2020-01"
+    end: "2022-06"
+    tools: [Autodesk Inventor, AutoCAD, GD&T]
+    achievements:
+      - id: exp1-a1
+        what: "TODO: what you delivered"
+        metric: "TODO: real number, e.g. cut machining time 18%"
+        how: "TODO: how you did it"
+        scope: individual
+
+projects:
+  - id: proj-thesis
+    name: Gesture control for an Igus robot arm (Master's thesis)
+    context: SRH Berlin University of Applied Sciences, M.Eng. Industry 4.0
+    start: "2024-03"   # TODO: real dates
+    end: "2024-09"
+    url: https://github.com/Varaha18/lstm-gesture-recognition
+    tools: [Python, MediaPipe, LSTM, TensorFlow/Keras, OpenCV, TCP/IP, Igus Robolink, CRI protocol]
+    achievements:
+      - id: proj-thesis-a1
+        what: Built real-time hand-gesture control of a physical Igus robot arm
+        metric: 91.2% accuracy on 6 gestures, running on a laptop CPU only
+        how: MediaPipe hand tracking feeding an LSTM classifier; commands sent to the arm over TCP/IP (CRI protocol)
+        scope: individual
+
+education:
+  - id: edu1
+    degree: M.Eng. Industry 4.0
+    institution: SRH Berlin University of Applied Sciences
+    location: Berlin, Germany
+    start: "2023-03"   # TODO
+    end: "2025-03"     # TODO
+    details: "Thesis: LSTM-based gesture recognition for robot control"
+  - id: edu2
+    degree: "TODO: Bachelor's degree"
+    institution: TODO
+    location: TODO
+    start: "2015-08"
+    end: "2019-05"
+    details: ""
+
+# Real courses, freelance work, career breaks etc. that explain time between jobs.
+other_activities: []
+
+certifications:
+  - Siemens Mechatronic Systems Certification (Levels 1-3)
+
+# level: advanced | working | familiar  ("familiar" is shown as "Familiar with").
+# aliases: other spellings, so the fact-checker accepts "ROS2" for "ROS 2".
+skills:
+  - {name: Python, level: advanced}
+  - {name: OpenCV, level: working}
+  - {name: MediaPipe, level: advanced}
+  - {name: TensorFlow, level: working, aliases: [Keras, TensorFlow/Keras]}
+  - {name: PyTorch, level: working}
+  - {name: YOLOv8, level: working, aliases: [YOLO]}
+  - {name: LSTM, level: working}
+  - {name: Igus Robolink, level: working, aliases: [CRI protocol, igus]}
+  - {name: TCP/IP, level: working}
+  - {name: PLC, level: working, aliases: [PLC programming]}
+  - {name: ROS 2, level: familiar, aliases: [ROS2, ROS]}
+  - {name: Autodesk Inventor, level: advanced, aliases: [Inventor]}
+  - {name: Siemens NX, level: working, aliases: [NX]}
+  - {name: AutoCAD, level: working}
+  - {name: GD&T, level: working}
+  - {name: DFM, level: working, aliases: [Design for Manufacturing]}
+  - {name: CNC, level: working}
+  - {name: 3D printing, level: working, aliases: [additive manufacturing]}
+  - {name: Computer Vision, level: advanced}
+  - {name: Machine Learning, level: working}
+
+# Answers used to fill application forms. Booleans become Yes/No (Ja/Nein).
+# These are never sent to Claude.
+application_answers:
+  work_authorization: true          # TODO: allowed to work in Germany/EU?
+  requires_sponsorship: false       # TODO
+  willing_to_relocate: false
+  salary_expectation: "TODO e.g. 55000"
+  notice_period: "TODO e.g. Immediately available"
+  earliest_start: "TODO e.g. 2026-12-01"
+  years_experience: "TODO"
+  how_did_you_hear: Company website
+  english_level: "TODO e.g. Fluent (C1)"
+  german_level: "TODO e.g. Intermediate (B1)"
+  eeo_answer: Decline to self-identify
+  # Your own rules for recurring questions (regex on the question text):
+  custom:
+    - match: "drivers? licen[cs]e|führerschein"
+      answer: "TODO"

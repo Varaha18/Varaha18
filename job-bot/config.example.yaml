@@ -1,0 +1,77 @@
+# JobBot configuration. Copy to config.yaml (`python -m jobbot init`) and edit.
+# Values written as env:NAME are read from environment variables.
+
+search:
+  # Used as search terms for the Arbeitsagentur source.
+  keywords:
+    - Robotics Engineer
+    - Automation Engineer
+    - Computer Vision Engineer
+    - Mechatronics Engineer
+    - Mechanical Design Engineer
+    - Robotik Ingenieur
+  # A job title must contain at least one of these (case-insensitive, word start).
+  title_include_any:
+    [robot, automation, automatisierung, vision, mechatron, mechanical, konstrukt, machine learning, ml engineer, perception]
+  title_exclude:
+    [senior, sr., principal, staff, lead, head of, director, manager, werkstudent, praktikum, intern]
+  # Location must contain one of these. Remove the list to accept any location.
+  locations: [Berlin, Remote, Germany, Deutschland, Potsdam, Brandenburg]
+  # Drop postings whose description contains any of these.
+  description_exclude: ["security clearance", "us citizens only"]
+  max_age_days: 21
+
+  sources:
+    arbeitsagentur:          # Germany's federal job board (public API)
+      enabled: true
+      where: Berlin
+      radius_km: 50
+      size: 50
+      fetch_details: true
+    # Company career boards. Find the slug in the company's job URL, e.g.
+    #   https://boards.greenhouse.io/<slug>   https://jobs.lever.co/<slug>
+    #   https://jobs.ashbyhq.com/<slug>
+    # Entries can be a plain slug or {slug: ..., name: "Display Name"}.
+    # Lever boards hosted in the EU (jobs.eu.lever.co) use the prefix "eu:".
+    greenhouse: []
+    lever: []
+    ashby: []
+
+scoring:
+  use_llm: true          # Claude reads each posting and scores your fit (0-100)
+  llm_prefilter_min: 15  # skip the LLM for postings with almost no keyword overlap
+  min_score: 60          # below this, jobs are not shortlisted
+
+llm:
+  enabled: true
+  model: claude-opus-5-5
+  effort: medium
+
+resume:
+  date_style: year       # "year" (2021 - 2024) or "month" (Mar 2021 - Aug 2024)
+  max_pages: 2
+  cover_letter: true
+  gap_months: 3          # flag gaps of this many months or more in review notes
+
+apply:
+  mode: review           # review = you confirm each submit; auto = submit unattended
+  daily_limit: 15
+  headless: true         # auto mode only; review mode always shows the browser
+  accept_privacy_consent: true   # tick "I agree to the privacy policy" boxes
+  llm_free_text_answers: true    # let Claude answer open questions from your profile
+
+mail:
+  # Gmail: imap.gmail.com   iCloud: imap.mail.me.com   Outlook: outlook.office365.com
+  imap_host: imap.mail.me.com
+  imap_port: 993
+  username: env:JOBBOT_MAIL_USER
+  password: env:JOBBOT_MAIL_PASSWORD     # an app-specific password, not your login
+  inbox: INBOX
+  responses_folder: JobBot   # replies are filed into JobBot/Interview, JobBot/Rejected, ...
+  move: false                # true = also remove them from the inbox
+  lookback_days: 30
+  llm_classify: true         # ask Claude when the keyword rules can't tell
+
+paths:
+  data_dir: data
+  excel: data/applications.xlsx

@@ -1,0 +1,23 @@
+<!doctype html>
+<html><body>
+<h1>Robotics Engineer - Apply</h1>
+<form id="app" onsubmit="event.preventDefault(); document.body.innerHTML='<h2>Thank you for applying!</h2>';">
+  <label for="fn">First Name *</label><input id="fn" name="first_name" required>
+  <label for="ln">Last Name *</label><input id="ln" name="last_name" required>
+  <label for="em">Email *</label><input id="em" type="email" name="email" required>
+  <label for="ph">Phone</label><input id="ph" name="phone">
+  <label for="li">LinkedIn Profile</label><input id="li" name="urls[LinkedIn]">
+  <label for="cv">Resume/CV *</label><input id="cv" type="file" name="resume" required>
+  <label for="auth">Are you legally authorized to work in Germany? *</label>
+  <select id="auth" name="auth" required><option value="">Select...</option><option>Yes</option><option>No</option></select>
+  <fieldset><legend>Will you now or in the future require visa sponsorship? *</legend>
+    <label><input type="radio" name="spons" value="1" required> Yes</label>
+    <label><input type="radio" name="spons" value="0"> No</label>
+  </fieldset>
+  <label for="sal">Salary expectation</label><input id="sal" name="salary">
+  <label for="why">Why do you want to join us? *</label><textarea id="why" name="why" required></textarea>
+  <label for="fav">Your favourite colour *</label><input id="fav" name="fav" required>
+  <label><input type="checkbox" name="gdpr" required> I agree to the privacy policy</label>
+  <button type="submit">Submit application</button>
+</form>
+</body></html>
