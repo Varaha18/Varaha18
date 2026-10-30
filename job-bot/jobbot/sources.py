@@ -106,56 +106,78 @@ BA_BASE = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service"
 BA_HEADERS = {**UA, "X-API-Key": "jobboerse-jobsuche"}  # public key documented by the BA
 
 
+def _first(d: dict, *keys):
+    for k in keys:
+        if d.get(k):
+            return d[k]
+    return None
+
+
+def _ba_fields(s: dict) -> dict:
+    """Normalize one search hit. The v6 API ("ergebnisliste") renamed most fields
+    of the older format ("stellenangebote"); both are accepted."""
+    employer = _first(s, "arbeitgeber", "firma", "arbeitgeberName", "unternehmen", "arbeitgeberBezeichnung")
+    if isinstance(employer, dict):
+        employer = _first(employer, "name", "firma", "bezeichnung")
+    locations = s.get("stellenlokationen") or []
+    place = s.get("arbeitsort") or (locations[0].get("adresse") if locations else None) or {}
+    posted = _first(s, "aktuelleVeroeffentlichungsdatum", "datumErsteVeroeffentlichung",
+                    "veroeffentlichungsdatum", "veroeffentlichtAm")
+    if not posted:  # any other date field named after publication
+        posted = next((v for k, v in s.items() if "veroeffentlich" in k.lower() and isinstance(v, str)), "")
+    return {
+        "refnr": _first(s, "refnr", "referenznummer", "hashId"),
+        "title": _first(s, "stellenangebotsTitel", "titel", "beruf") or "",
+        "employer": employer or "?",
+        "city": place.get("ort", ""),
+        "posted": posted,
+        "external_url": _first(s, "externeUrl", "externeURL", "allianzpartnerUrl"),
+    }
+
+
 def arbeitsagentur(what: str, where: str, radius_km: int = 50, days: int = 21,
                    size: int = 50, fetch_details: bool = True) -> list[dict]:
     """Bundesagentur für Arbeit job search (Germany's national job board).
 
-    Unofficial but stable API, documented at github.com/bundesAPI/jobsuche-api.
+    Unofficial API, documented at github.com/bundesAPI/jobsuche-api.
     """
     params = {"was": what, "wo": where, "umkreis": radius_km,
               "veroeffentlichtseit": min(days, 100), "size": size, "angebotsart": 1}
-    r = None
-    for version in ("v6", "v4"):  # v6 is the documented path; v4 still answers in some setups
-        r = requests.get(f"{BA_BASE}/pc/{version}/jobs", params=params, headers=BA_HEADERS, timeout=TIMEOUT)
-        if r.status_code != 404:
-            break
+    r = requests.get(f"{BA_BASE}/pc/v6/jobs", params=params, headers=BA_HEADERS, timeout=TIMEOUT)
     r.raise_for_status()
-    data = r.json()
-    if "stellenangebote" not in data:
-        log.debug("arbeitsagentur %s: no results; response keys %s, maxErgebnisse=%s",
-                  r.url, list(data), data.get("maxErgebnisse"))
+    data = r.json() if r.text.strip() else {}
+    hits = data.get("ergebnisliste") or data.get("stellenangebote") or []
+    if not hits:
+        log.debug("arbeitsagentur %s: no results; response keys %s", r.url, list(data))
     jobs = []
-    for s in data.get("stellenangebote", []):
-        refnr = s.get("refnr") or s.get("referenznummer")
-        if not refnr:
+    for hit in hits:
+        f = _ba_fields(hit)
+        if not f["refnr"]:
+            log.debug("arbeitsagentur: hit without reference number, keys %s", list(hit))
             continue
-        place = s.get("arbeitsort") or {}
-        url = f"https://www.arbeitsagentur.de/jobsuche/jobdetail/{refnr}"
-        # Search results carry the occupation in `beruf`; the posting's own title
-        # is only in the details response.
-        title = s.get("titel") or s.get("beruf", "")
-        description = ""
-        apply_url = s.get("externeUrl") or url
+        url = f"https://www.arbeitsagentur.de/jobsuche/jobdetail/{f['refnr']}"
+        title, description, apply_url = f["title"], "", f["external_url"] or url
         if fetch_details:
-            details = _ba_details(refnr)
+            details = _ba_details(f["refnr"])
             title = details.get("stellenangebotsTitel") or details.get("titel") or title
             description = details.get("stellenangebotsBeschreibung") or details.get("stellenbeschreibung") or ""
             apply_url = details.get("allianzpartnerUrl") or details.get("externeUrl") or apply_url
-        jobs.append(_job("arbeitsagentur", s.get("arbeitgeber", "?"), refnr, title,
-                         place.get("ort", ""), url, apply_url, description,
-                         s.get("aktuelleVeroeffentlichungsdatum")))
+        jobs.append(_job("arbeitsagentur", f["employer"], f["refnr"], title, f["city"],
+                         url, apply_url, description, f["posted"]))
     return jobs
 
 
 def _ba_details(refnr: str) -> dict:
     encoded = quote(base64.b64encode(refnr.encode()).decode(), safe="=")
-    try:
-        r = requests.get(f"{BA_BASE}/pc/v4/jobdetails/{encoded}", headers=BA_HEADERS, timeout=TIMEOUT)
-        r.raise_for_status()
-        return r.json()
-    except (requests.RequestException, ValueError) as e:
-        log.debug("BA details unavailable for %s: %s", refnr, e)
-        return {}
+    for path in (f"/pc/v6/jobdetails/{encoded}", f"/pc/v4/jobdetails/{encoded}"):
+        try:
+            r = requests.get(BA_BASE + path, headers=BA_HEADERS, timeout=TIMEOUT)
+            if r.ok and r.text.strip():
+                return r.json()
+            log.debug("BA details %s -> HTTP %s", path, r.status_code)
+        except (requests.RequestException, ValueError) as e:
+            log.debug("BA details %s failed: %s", path, e)
+    return {}
 
 
 def _boards(entries) -> list[tuple[str, str | None]]:

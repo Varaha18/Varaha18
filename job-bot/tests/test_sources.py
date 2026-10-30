@@ -50,7 +50,7 @@ def test_arbeitsagentur_uses_beruf_and_details(monkeypatch):
     calls = []
 
     class R(Resp):
-        status_code = 200
+        status_code, ok, text = 200, True, "{...}"
 
     def get(url, **kw):
         calls.append(url)
@@ -68,3 +68,18 @@ def test_arbeitsagentur_uses_beruf_and_details(monkeypatch):
     monkeypatch.setattr(sources, "_ba_details", lambda refnr: {})
     [job] = sources.arbeitsagentur("Robotik", "Berlin")
     assert job["title"] == "Ingenieur/in - Robotik"  # falls back to the occupation, never empty
+
+
+def test_arbeitsagentur_v6_format(monkeypatch):
+    """Shape of the v6 response as returned by the live API in October 2026."""
+    class R(Resp):
+        status_code, ok, text = 200, True, "{...}"
+
+    hit = {"stellenangebotsart": "ARBEIT", "stellenangebotsTitel": "Ingenieur*in (m/w/d)",
+           "referenznummer": "10001-1002716922-S", "firma": "Acme Robotics GmbH",
+           "datumErsteVeroeffentlichung": "2026-10-20",
+           "stellenlokationen": [{"adresse": {"plz": "10178", "ort": "Berlin", "region": "BERLIN"}}]}
+    monkeypatch.setattr(sources.requests, "get", lambda url, **kw: R({"ergebnisliste": [hit]}))
+    [job] = sources.arbeitsagentur("Ingenieur", "Berlin", fetch_details=False)
+    assert job["id"] == "arbeitsagentur:Acme Robotics GmbH:10001-1002716922-S"
+    assert (job["title"], job["location"], job["posted_at"]) == ("Ingenieur*in (m/w/d)", "Berlin", "2026-10-20")
