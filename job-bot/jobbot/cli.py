@@ -119,6 +119,10 @@ def cmd_tailor(s: Settings, db: DB, limit: int | None, job_id: str | None) -> No
         sys.exit("tailor needs the Claude API (set llm.enabled: true and ANTHROPIC_API_KEY)")
     cfg = s.section("resume")
     jobs = [db.get(job_id)] if job_id else db.jobs("shortlisted")[: limit or None]
+    if not any(jobs):
+        print("tailor: no shortlisted jobs. Run `search` and `score` first; "
+              "`status` shows why jobs were dropped.")
+        return
     personal = s.profile.get("personal", {})
     for job in filter(None, jobs):
         print(f"tailoring: {job['title']} @ {job['company']}")
@@ -283,6 +287,18 @@ def cmd_status(db: DB) -> None:
     counts = Counter(j["status"] for j in db.jobs())
     for status, n in sorted(counts.items(), key=lambda x: -x[1]):
         print(f"{status:22} {n}")
+    dropped = db.jobs("filtered_out")
+    by_filter = Counter(j["score_reason"] for j in dropped if j["score"] is None)
+    if by_filter:
+        print("\nDropped by filters (edit config.yaml, then run `refilter`):")
+        for reason, n in by_filter.most_common(8):
+            print(f"  {n:4}  {reason}")
+    low = sorted((j for j in dropped if j["score"] is not None), key=lambda j: -j["score"])
+    if low:
+        print("\nBest jobs below min_score (lower it, then `refilter --include-scored` and `score`):")
+        for j in low[:8]:
+            print(f"  {j['score']:4}  {j['title'][:55]} @ {j['company'][:25]}")
+            print(f"        {(j['score_reason'] or '')[:110]}")
     pending = db.jobs("resume_needs_review", "needs_manual")
     if pending:
         print("\nNeeds your attention:")
