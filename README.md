@@ -7,7 +7,7 @@ Robotics and mechanical engineer in Berlin (M.Eng. Industry 4.0, SRH Berlin). I 
 | Project | What it is |
 |---|---|
 | [**Gesture control for an Igus robot arm**](https://github.com/Varaha18/lstm-gesture-recognition) | My master's thesis. MediaPipe hand tracking + LSTM classifier driving a real robot arm over TCP/IP. 91.2% accuracy on 6 gestures, ~61 ms latency, laptop CPU only. |
-| [**PySprout**](https://github.com/Varaha18/pysprout-test) | A Python-learning game for iPhone: story-mode lessons and survival-mode coding quests that run real Python in the browser. |
+| [**PySprout**](https://github.com/Varaha18/pysprout) ([play](https://varaha18.github.io/pysprout/)) | A Python-learning game for iPhone: story-mode lessons and survival-mode coding quests that run real Python in the browser. |
 
 ### What I work with
 
